@@ -210,21 +210,21 @@ def _parse_regex_quantity(text: str) -> Optional[dict]:
 
 _LLM_PROMPTS: dict[str, str] = {
     "Q3A": (
-        "A Ghanaian farmer was asked which maize seed they bought instead of BM270.\n"
+        "A farmer was asked which maize seed they bought instead of SeedX.\n"
         "Response: \"{text}\"\n\n"
         "Extract only the seed variety or brand name. "
         "Return ONLY valid JSON — no explanation, no markdown:\n"
         "{{\"seed_name\": \"<name>\"}} or {{\"seed_name\": null}}"
     ),
     "Q5": (
-        "A Ghanaian farmer was asked which fertilizer they bought this season.\n"
+        "A farmer was asked which fertilizer they bought this season.\n"
         "Response: \"{text}\"\n\n"
         "Extract only the fertilizer name or brand. "
         "Return ONLY valid JSON — no explanation, no markdown:\n"
         "{{\"fertilizer_name\": \"<name>\"}} or {{\"fertilizer_name\": null}}"
     ),
     "Q6": (
-        "A Ghanaian farmer was asked where they bought their fertilizer — "
+        "A farmer was asked where they bought their fertilizer — "
         "which agro shop or dealer.\n"
         "Response: \"{text}\"\n\n"
         "Extract the shop name, dealer name, or location. "
@@ -267,7 +267,7 @@ async def code_q8_themes(raw_translation: str) -> dict:
     Deferred post-call to avoid adding latency during the live call.
     """
     prompt = (
-        "A Ghanaian farmer was asked what they remember most from a Demeter Ghana field day.\n"
+        "A farmer was asked what they remember most from a company field day.\n"
         f"Response: \"{raw_translation}\"\n\n"
         "Return ONLY valid JSON — no explanation, no markdown:\n"
         "{\"themes\": [\"...\"], "

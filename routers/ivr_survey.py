@@ -18,7 +18,7 @@ router = APIRouter()
 
 AUDIOS_DIR = Path("audios")
 AUDIO_BASE = "/survey/audio"
-# URL of the deployed ayaspeech-models-api — set in .env
+# URL of the deployed ASR+MT model API — set in .env
 ASR_MT_API_URL = os.getenv("ASR_MT_API_URL", "http://localhost:8001")
 ASR_MT_ENDPOINT = f"{ASR_MT_API_URL}/transcribe_and_translate/"
 
@@ -51,7 +51,7 @@ class PostCallRequest(BaseModel):
 
 async def _call_asr_mt(audio_path: str) -> tuple[str, str, float, float]:
     """
-    POST audio to the ayaspeech ASR+MT API.
+    POST audio to the ASR+MT API.
     Returns (twi_transcript, english_translation, asr_time, mt_time).
     Raises HTTPException on failure.
     """

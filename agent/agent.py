@@ -1,5 +1,5 @@
 """
-Demeter BM270 Survey Agent
+AgriCo SeedX Survey Agent
 
 Architecture:
   AgentSession (handles Playground protocol + VAD audio segmentation)
@@ -26,7 +26,7 @@ from livekit.agents import Agent, AgentSession, JobContext, ModelSettings, Worke
 from livekit.agents.voice.room_io import RoomOptions, TextInputOptions, TextInputEvent
 from livekit.plugins import silero
 
-logger = logging.getLogger("demeter.agent")
+logger = logging.getLogger("ivr_survey.agent")
 from livekit.agents.llm.llm import LLMStream, DEFAULT_API_CONNECT_OPTIONS
 from livekit.agents.stt import SpeechData, SpeechEvent, SpeechEventType, STTCapabilities
 from livekit.agents.tts import TTSCapabilities
@@ -41,7 +41,7 @@ from survey.questions import QUESTIONS, SYS_AUDIO
 from survey.session import SessionStore
 
 AUDIOS_DIR   = Path(__file__).parent.parent / "audios"
-ASR_MT_URL   = os.getenv("ASR_MT_API_URL", "http://34.229.153.144:8080").rstrip("/") + "/transcribe_and_translate/"
+ASR_MT_URL   = os.getenv("ASR_MT_API_URL", "http://localhost:8080").rstrip("/") + "/transcribe_and_translate/"
 SAMPLE_RATE  = 16_000
 NUM_CHANNELS = 1
 

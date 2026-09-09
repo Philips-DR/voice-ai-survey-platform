@@ -5,10 +5,10 @@ from fastapi.responses import FileResponse
 from routers.ivr_survey import router
 
 app = FastAPI(
-    title="Demeter BM270 IVR Survey",
+    title="AgriCo SeedX IVR Survey",
     description=(
-        "Voice IVR survey pipeline for Demeter Ghana Limited. "
-        "Runs ASR → MT → answer parser → routing logic for the BM270 field day follow-up survey."
+        "Voice IVR survey pipeline for AgriCo. "
+        "Runs ASR → MT → answer parser → routing logic for the SeedX field day follow-up survey."
     ),
     version="0.1.0",
 )

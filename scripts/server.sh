@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# server.sh — Manage the Demeter BM270 IVR server
+# server.sh — Manage the AgriCo SeedX IVR server
 #
 # Usage:
 #   ./scripts/server.sh setup                       one-time HTTPS + nginx setup
@@ -16,13 +16,13 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 PID_FILE="$PROJECT_DIR/run/server.pid"
 ACCESS_LOG="$PROJECT_DIR/logs/access.log"
 ERROR_LOG="$PROJECT_DIR/logs/error.log"
-NGINX_CONF_SRC="$SCRIPT_DIR/nginx-demeter.conf"
-NGINX_CONF_DST="/etc/nginx/conf.d/demeter-demo.conf"
+NGINX_CONF_SRC="$SCRIPT_DIR/nginx-ivr-survey.conf"
+NGINX_CONF_DST="/etc/nginx/conf.d/ivr-survey-demo.conf"
 CERT="$PROJECT_DIR/run/selfsigned.crt"
 KEY="$PROJECT_DIR/run/selfsigned.key"
 
 PORT="${PORT:-8000}"
-PUBLIC_IP="${PUBLIC_IP:-54.236.135.105}"
+PUBLIC_IP="${PUBLIC_IP:-your.server.ip.here}"
 HOST="${HOST:-0.0.0.0}"
 WORKERS="${WORKERS:-$(( $(nproc 2>/dev/null || echo 2) * 2 + 1 ))}"
 
@@ -138,7 +138,7 @@ cmd_restart() {
 # ── status ────────────────────────────────────────────────────────────────────
 cmd_status() {
   echo "══════════════════════════════════════"
-  echo "  Demeter BM270 IVR — Server Status"
+  echo "  AgriCo SeedX IVR — Server Status"
   echo "══════════════════════════════════════"
   if live; then
     local p; p="$(pid)"

@@ -39,7 +39,7 @@ QUESTIONS: dict[str, Question] = {
 
     "OPEN": Question(
         id="OPEN",
-        text="Hello, this is a call from Demeter Ghana. Is now a good time?",
+        text="Hello, this is a call from AgriCo. Is now a good time?",
         audio_file="SYS_001.wav",
         parser_type=ParserType.KEYWORD,
         options=[
@@ -54,7 +54,7 @@ QUESTIONS: dict[str, Question] = {
 
     "Q1": Question(
         id="Q1",
-        text="Did you buy BM270 maize seed after the field day?",
+        text="Did you buy SeedX maize seed after the field day?",
         audio_file="Q1.wav",
         parser_type=ParserType.KEYWORD,
         options=[
@@ -88,7 +88,7 @@ QUESTIONS: dict[str, Question] = {
 
     "Q2A": Question(
         id="Q2A",
-        text="How many bags or acres did you plant with BM270?",
+        text="How many bags or acres did you plant with SeedX?",
         audio_file="Q2A.wav",
         parser_type=ParserType.REGEX,
         allows_reprompt=False,
@@ -96,7 +96,7 @@ QUESTIONS: dict[str, Question] = {
 
     "Q3": Question(
         id="Q3",
-        text="What was the main reason you didn't buy BM270? "
+        text="What was the main reason you didn't buy SeedX? "
              "Was it too expensive, couldn't find it near you, "
              "not ready to try a new seed, bought a different seed, or something else?",
         audio_file="Q3.wav",
@@ -162,7 +162,7 @@ QUESTIONS: dict[str, Question] = {
 
     "Q7": Question(
         id="Q7",
-        text="After attending the field day, did you tell any other farmers about DGL or BM270?",
+        text="After attending the field day, did you tell any other farmers about AgriCo or SeedX?",
         audio_file="Q7.wav",
         parser_type=ParserType.KEYWORD,
         options=[
@@ -186,7 +186,7 @@ QUESTIONS: dict[str, Question] = {
 
     "Q9": Question(
         id="Q9",
-        text="Are you planning to use any Demeter products next season?",
+        text="Are you planning to use any AgriCo products next season?",
         audio_file="Q9.wav",
         parser_type=ParserType.FUZZY,
         options=[

@@ -25,7 +25,7 @@ import httpx
 # ── Config ────────────────────────────────────────────────────────────────────
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 AUDIOS_DIR  = PROJECT_DIR / "audios"
-API_BASE    = os.getenv("ASR_MT_API_URL", "http://34.229.153.144:8080").rstrip("/docs").rstrip("/")
+API_BASE    = os.getenv("ASR_MT_API_URL", "http://localhost:8080").rstrip("/docs").rstrip("/")
 
 MTTTS_URL   = f"{API_BASE}/translation_speech_synthesis"
 TRANSLATE_URL = f"{API_BASE}/translate"
@@ -35,7 +35,7 @@ SCRIPTS: dict[str, str] = {
 
     # ── System ────────────────────────────────────────────────────────────────
     "SYS_001": (
-        "Hello, this is a call from Demeter Ghana. "
+        "Hello, this is a call from AgriCo. "
         "You recently attended one of our field days — thank you so much for that. "
         "We have just a few quick questions for you, it will take about five minutes. "
         "Is now a good time? Press 1 for yes, or press 2 to be called back at a better time."
@@ -54,9 +54,9 @@ SCRIPTS: dict[str, str] = {
         "We will be in touch about new products and field days in your area. Goodbye."
     ),
 
-    # ── Section 1: BM270 Seed ─────────────────────────────────────────────────
+    # ── Section 1: SeedX Seed ─────────────────────────────────────────────────
     "Q1": (
-        "Did you buy BM270 maize seed after the field day? "
+        "Did you buy SeedX maize seed after the field day? "
         "Press 1 for yes, or press 2 for no."
     ),
     "Q2": (
@@ -66,10 +66,10 @@ SCRIPTS: dict[str, str] = {
         "Press 3 if you are waiting for next season."
     ),
     "Q2A": (
-        "How many bags or acres did you plant with BM270? Please say the number."
+        "How many bags or acres did you plant with SeedX? Please say the number."
     ),
     "Q3": (
-        "What was the main reason you did not buy BM270? "
+        "What was the main reason you did not buy SeedX? "
         "Press 1 if it was too expensive. "
         "Press 2 if you could not find it near you. "
         "Press 3 if you were not ready to try a new seed. "
@@ -94,7 +94,7 @@ SCRIPTS: dict[str, str] = {
 
     # ── Section 3: Field day impact ───────────────────────────────────────────
     "Q7": (
-        "After attending the field day, did you tell any other farmers about DGL or BM270? "
+        "After attending the field day, did you tell any other farmers about AgriCo or SeedX? "
         "Press 1 for yes, or press 2 for no."
     ),
     "Q8": (
@@ -104,7 +104,7 @@ SCRIPTS: dict[str, str] = {
 
     # ── Section 4: Forward intent ─────────────────────────────────────────────
     "Q9": (
-        "Are you planning to use any Demeter products next season? "
+        "Are you planning to use any AgriCo products next season? "
         "Press 1 for yes, definitely. "
         "Press 2 for probably yes. "
         "Press 3 if you are not sure. "

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# agent.sh — Manage the Demeter LiveKit survey agent
+# agent.sh — Manage the LiveKit IVR survey agent
 #
 # Usage:
 #   ./scripts/agent.sh dev                   hot-reload, connects to Agents Playground
@@ -128,7 +128,7 @@ cmd_restart() {
 # ── status ────────────────────────────────────────────────────────────────────
 cmd_status() {
   echo "══════════════════════════════════════"
-  echo "  Demeter Survey Agent — Status"
+  echo "  IVR Survey Agent — Status"
   echo "══════════════════════════════════════"
   if live; then
     local p; p="$(pid)"
