@@ -1,0 +1,14 @@
+.env
+.claude/
+# Contains real farmer PII (names, phone numbers, GPS) and client survey data
+documents/
+audios/
+.understand-anything/
+sessions/
+logs/
+run/server.pid
+__pycache__/
+*.pyc
+*.pyo
+run/selfsigned.key
+run/selfsigned.crt

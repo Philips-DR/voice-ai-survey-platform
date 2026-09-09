@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demeter BM270 · IVR Pipeline Demo</title>
+<style>
+:root {
+  --bg:        #f8f5ef;
+  --surface:   #ffffff;
+  --surface-2: #f0ece4;
+  --border:    #ddd5c8;
+  --border-2:  #c8bfb0;
+  --g900:      #0d2e1a;
+  --g800:      #1a5c38;
+  --g700:      #246b44;
+  --g100:      #e0f0e8;
+  --amber:     #f0a500;
+  --amber-dk:  #c87800;
+  --amber-lt:  #fff8e0;
+  --tx:        #1a1a1a;
+  --tx2:       #4a5e52;
+  --tx3:       #7a8e84;
+  --font-d:    Georgia,'Times New Roman',serif;
+  --font-b:    'Trebuchet MS','Gill Sans',system-ui,sans-serif;
+  --font-m:    'Courier New','Lucida Console',monospace;
+  --r:         8px;
+  --sh:        0 1px 4px rgba(0,0,0,.08);
+  /* Pipeline node colours — match system-workflow.mermaid exactly */
+  --logic-bg:  #CECBF6; --logic-bd: #534AB7; --logic-tx: #3C3489;
+  --model-bg:  #9FE1CB; --model-bd: #0F6E56; --model-tx: #085041;
+  --human-bg:  #FAC775; --human-bd: #854F0B; --human-tx: #633806;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg);
+  background-image:
+    radial-gradient(ellipse 60% 50% at 15% 50%,rgba(26,92,56,.04) 0%,transparent 100%),
+    radial-gradient(ellipse 50% 40% at 85% 20%,rgba(240,165,0,.04) 0%,transparent 100%);
+  color:var(--tx);font-family:var(--font-b);font-size:14px;
+  height:100vh;display:flex;flex-direction:column;overflow:hidden;
+}
+
+/* ── HEADER ── */
+.hd{background:var(--g900);padding:10px 18px;display:flex;align-items:center;
+    justify-content:space-between;border-bottom:3px solid var(--amber);flex-shrink:0}
+.hd-l{display:flex;align-items:center;gap:12px}
+.logo{width:32px;height:32px;background:var(--amber);border-radius:5px;
+      display:flex;align-items:center;justify-content:center;
+      font:bold 16px var(--font-d);color:var(--g900);flex-shrink:0}
+.hd-title{font:16px var(--font-d);color:#fff;letter-spacing:.02em}
+.hd-sub{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:.09em;
+        text-transform:uppercase;margin-top:1px}
+.vdiv{width:1px;height:28px;background:rgba(255,255,255,.12)}
+.call-stat{display:flex;align-items:center;gap:6px;font:13px var(--font-m);
+           color:rgba(255,255,255,.6)}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.25);transition:background .3s}
+.dot.active{background:#4cdf80;animation:pdot 1.5s infinite}
+.dot.done{background:var(--amber)}
+@keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.8)}}
+.timer{font:22px var(--font-m);color:#fff;letter-spacing:.04em;min-width:52px}
+.hd-r{display:flex;gap:8px}
+
+/* ── BUTTONS ── */
+.btn{border:none;cursor:pointer;font-family:var(--font-b);font-size:13px;
+     border-radius:var(--r);padding:7px 14px;font-weight:600;
+     letter-spacing:.02em;transition:all .15s}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-amber{background:var(--amber);color:var(--g900)}.btn-amber:not(:disabled):hover{background:var(--amber-dk)}
+.btn-green{background:var(--g800);color:#fff}.btn-green:not(:disabled):hover{background:var(--g700)}
+.btn-ghost{background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);
+           border:1px solid rgba(255,255,255,.14)}.btn-ghost:hover{background:rgba(255,255,255,.18)}
+.btn-outline{background:transparent;color:var(--g800);border:1.5px solid var(--g800)}
+.btn-outline:hover{background:var(--g100)}
+
+/* ── LAYOUT ── */
+.app{display:grid;grid-template-columns:1fr 390px;flex:1;overflow:hidden}
+
+/* ── LEFT ── */
+.main{display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden}
+
+/* ── WELCOME ── */
+.welcome{flex:1;display:flex;flex-direction:column;align-items:center;
+         justify-content:center;padding:48px 32px;text-align:center}
+.wico{width:72px;height:72px;background:var(--g100);border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 20px;font-size:32px}
+.wtitle{font:26px var(--font-d);color:var(--g900);margin-bottom:8px}
+.wdesc{color:var(--tx2);font-size:14px;max-width:400px;line-height:1.65;margin-bottom:24px}
+.wmeta{display:flex;gap:28px;margin-bottom:24px}
+.mval{font:bold 28px var(--font-d);color:var(--g800)}
+.mlbl{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;margin-top:2px}
+.wrow{display:flex;gap:8px;width:100%;max-width:340px}
+input.phone{flex:1;padding:9px 12px;border:1.5px solid var(--border-2);
+            border-radius:var(--r);font:14px var(--font-m);
+            background:var(--surface);color:var(--tx)}
+input.phone:focus{outline:none;border-color:var(--g800)}
+
+/* ── TRANSCRIPT ── */
+.transcript{flex:1;overflow-y:auto;padding:16px 20px;scroll-behavior:smooth}
+.transcript::-webkit-scrollbar{width:5px}
+.transcript::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:3px}
+.turn{margin-bottom:12px;animation:si .22s ease-out}
+@keyframes si{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.turn-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+          margin-bottom:3px;display:flex;align-items:center;gap:5px}
+.turn-lbl.sys{color:var(--g800)}.turn-lbl.usr{color:var(--amber-dk)}.turn-lbl.info{color:var(--tx3)}
+.card{border-radius:var(--r);padding:11px 13px;border:1px solid var(--border);box-shadow:var(--sh)}
+.card.sys{background:var(--surface);border-left:3px solid var(--g800)}
+.card.usr{background:linear-gradient(135deg,#fffbf0,#fff8e0);
+          border-left:3px solid var(--amber);margin-left:16px}
+.card.reprompt{background:#fff5f0;border-left:3px solid #e67e22}
+.qbadge{display:inline-block;background:var(--g100);color:var(--g800);
+        font:700 10px var(--font-m);padding:2px 6px;border-radius:3px;margin-right:6px}
+.qtext{font-size:13px;line-height:1.5;margin-top:4px}
+.rtext{font-size:14px;font-style:italic;margin-bottom:8px}
+.prow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+      padding-top:7px;border-top:1px solid rgba(0,0,0,.06)}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:3px;
+       font:700 10px var(--font-m);letter-spacing:.05em;text-transform:uppercase}
+.b-keyword{background:#dbeafe;color:#1d4ed8}.b-fuzzy{background:#ede9fe;color:#7c3aed}
+.b-regex{background:#e5e7eb;color:#374151}.b-llm{background:var(--amber-lt);color:var(--amber-dk)}
+.b-raw{background:#dcfce7;color:#166534}
+.pkey{font:12px var(--font-m);color:var(--tx2)}
+.parr{color:var(--tx3);font-size:12px}
+.pnext{font:700 11px var(--font-m);color:var(--g800);background:var(--g100);
+       padding:2px 6px;border-radius:3px}
+.cbar-wrap{display:flex;align-items:center;gap:4px;margin-left:auto}
+.clbl{font-size:10px;color:var(--tx3)}
+.cbar{width:44px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.cfill{height:100%;background:var(--g800);border-radius:2px;transition:width .3s}
+.extval{margin-top:5px;font:11px var(--font-m);color:var(--tx2);
+        background:rgba(0,0,0,.04);padding:3px 7px;border-radius:4px}
+
+/* ── CURRENT Q BOX ── */
+.cqbox{border-top:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.cq-inner{padding:12px 18px}
+.cq-hdr{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+.cq-lbl{font-size:11px;font-weight:700;text-transform:uppercase;
+        letter-spacing:.08em;color:var(--tx3)}
+.cq-id{font:700 12px var(--font-m);color:var(--g800);background:var(--g100);
+       padding:2px 7px;border-radius:3px}
+.cq-parser{font:11px var(--font-m);color:var(--tx3);background:var(--surface-2);
+           padding:1px 6px;border-radius:3px}
+.cq-text{font:14px/1.5 var(--font-d);color:var(--tx);margin-bottom:10px}
+
+/* ── AUDIO ROW ── */
+.arow{display:flex;align-items:center;gap:8px;background:var(--g100);
+      border-radius:var(--r);padding:6px 10px;margin-bottom:10px}
+.aplay{width:24px;height:24px;background:var(--g800);border-radius:50%;
+       display:flex;align-items:center;justify-content:center;
+       color:#fff;font-size:10px;cursor:pointer;flex-shrink:0;
+       border:none;transition:background .15s}
+.aplay:hover{background:var(--g700)}
+.awave{display:flex;align-items:center;gap:2px;flex:1}
+.wb{width:3px;background:var(--g800);border-radius:2px;opacity:.35;transition:height .1s}
+.wb:nth-child(1){height:5px}.wb:nth-child(2){height:11px}.wb:nth-child(3){height:7px}
+.wb:nth-child(4){height:15px}.wb:nth-child(5){height:9px}.wb:nth-child(6){height:13px}
+.wb:nth-child(7){height:6px}.wb:nth-child(8){height:17px}.wb:nth-child(9){height:10px}
+.wb:nth-child(10){height:8px}.wb:nth-child(11){height:14px}.wb:nth-child(12){height:5px}
+.wb:nth-child(13){height:12px}.wb:nth-child(14){height:7px}.wb:nth-child(15){height:4px}
+.awave.playing .wb{animation:wa .75s ease-in-out infinite alternate;opacity:1}
+@keyframes wa{from{height:3px}to{height:17px}}
+.awave.playing .wb:nth-child(2n){animation-delay:.1s}
+.awave.playing .wb:nth-child(3n){animation-delay:.2s}
+.awave.playing .wb:nth-child(5n){animation-delay:.3s}
+.awave.playing .wb:nth-child(7n){animation-delay:.15s}
+.afname{font:10px var(--font-m);color:var(--tx2)}
+audio{display:none}
+
+/* ── OPTION BUTTONS ── */
+.opt-grid{display:flex;flex-wrap:wrap;gap:7px}
+.opt-btn{background:var(--surface);border:1.5px solid var(--border-2);
+         border-radius:var(--r);padding:8px 12px;
+         font:13px var(--font-b);color:var(--tx);
+         cursor:pointer;transition:all .15s;text-align:left;
+         flex:1;min-width:130px;display:flex;align-items:center;gap:9px}
+.opt-btn:hover:not(:disabled){background:var(--g100);border-color:var(--g800);color:var(--g800)}
+.opt-btn:active:not(:disabled){background:#b8dcc8}
+.opt-btn:disabled{opacity:.4;cursor:not-allowed}
+.opt-num{display:inline-flex;align-items:center;justify-content:center;
+         width:20px;height:20px;border-radius:50%;flex-shrink:0;
+         background:var(--g800);color:#fff;font:700 11px var(--font-m);transition:background .15s}
+.opt-btn:hover:not(:disabled) .opt-num{background:var(--g700)}
+.opt-btn:disabled .opt-num{background:var(--border-2)}
+.opt-hint{font-size:10px;color:var(--tx3);margin-top:5px;font:10px var(--font-m)}
+/* speaking-options animation */
+.speaking-opts{font:11px var(--font-m);color:var(--g800);margin-bottom:6px;
+               display:flex;align-items:center;gap:6px}
+.speaking-opts .spin{border-top-color:var(--g800)}
+
+/* ── MIC INPUT ── */
+.mic-area{display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 0 4px}
+.mic-btn{width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;
+         display:flex;align-items:center;justify-content:center;
+         font-size:22px;transition:all .2s;
+         background:var(--g800);color:#fff;
+         box-shadow:0 3px 10px rgba(26,92,56,.3)}
+.mic-btn:hover:not(:disabled){background:var(--g700);transform:scale(1.05)}
+.mic-btn.recording{background:#dc2626;animation:mring 1.2s infinite;
+                   box-shadow:0 3px 10px rgba(220,38,38,.35)}
+.mic-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+@keyframes mring{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4)}
+                 50%{box-shadow:0 0 0 10px rgba(220,38,38,0)}}
+.mic-wave{display:flex;align-items:center;gap:2px;height:18px}
+.mic-wave .wb{background:#dc2626;height:3px;opacity:.6}
+.mic-status{font:11px var(--font-m);color:var(--tx3)}
+.mic-status.rec{color:#dc2626;font-weight:700}
+
+/* ── COMPLETION ── */
+.comp{flex:1;overflow-y:auto;padding:18px 20px}
+.comp::-webkit-scrollbar{width:5px}
+.comp::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:3px}
+.comp-hdr{text-align:center;margin-bottom:18px}
+.comp-ico{font-size:42px;display:block;margin-bottom:8px}
+.comp-title{font:20px var(--font-d);color:var(--g800);margin-bottom:4px}
+.comp-sub{font-size:13px;color:var(--tx2)}
+.ans-table{background:var(--surface);border:1px solid var(--border);
+           border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.ans-row{display:grid;grid-template-columns:52px 1fr 70px;gap:6px;
+         padding:7px 11px;border-bottom:1px solid var(--border);
+         align-items:center;font-size:12px}
+.ans-row:last-child{border-bottom:none}
+.ans-row.hd{background:var(--surface-2);font-weight:700;font-size:10px;
+            text-transform:uppercase;letter-spacing:.05em;color:var(--tx3)}
+.aq{font:700 11px var(--font-m);color:var(--g800)}
+.ak{font:10px var(--font-m);color:var(--tx3);text-align:right}
+.q8box{background:var(--g100);border-radius:var(--r);padding:12px;margin-top:8px}
+.q8t{font-size:11px;font-weight:700;color:var(--g800);
+     text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px}
+.chip{background:var(--g800);color:#fff;font-size:10px;padding:2px 9px;border-radius:11px}
+.q8meta{font-size:12px;color:var(--tx2);margin-bottom:3px}
+.q8sum{font-size:12px;color:var(--tx);font-style:italic}
+pre.raw{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);
+        padding:10px;font:10px var(--font-m);overflow:auto;max-height:240px;
+        margin-top:8px;white-space:pre-wrap}
+
+/* ── RIGHT PANEL ── */
+.sidebar{display:flex;flex-direction:column;overflow:hidden;background:var(--surface)}
+
+/* ── PIPELINE ── */
+.pipe-wrap{padding:13px 13px 6px;flex-shrink:0;border-bottom:1px solid var(--border)}
+.sec-title{font-size:10px;font-weight:700;letter-spacing:.1em;
+           text-transform:uppercase;color:var(--tx3);margin-bottom:9px}
+
+.pn{display:flex;align-items:center;gap:8px;padding:6px 9px;
+    border-radius:6px;border:1.5px solid var(--border);
+    background:var(--surface-2);transition:all .22s;margin-bottom:2px}
+/* idle */
+.pn[data-s="idle"]{opacity:.38}
+/* active */
+.pn[data-s="active"].logic{background:var(--logic-bg);border-color:var(--logic-bd)}
+.pn[data-s="active"].model{background:var(--model-bg);border-color:var(--model-bd)}
+.pn[data-s="active"].human{background:var(--human-bg);border-color:var(--human-bd)}
+/* done */
+.pn[data-s="done"].logic{background:rgba(206,203,246,.3);border-color:var(--logic-bd)}
+.pn[data-s="done"].model{background:rgba(159,225,203,.3);border-color:var(--model-bd)}
+.pn[data-s="done"].human{background:rgba(250,199,117,.3);border-color:var(--human-bd)}
+/* bypass */
+.pn[data-s="bypass"]{opacity:.38;background:var(--surface-2)}
+
+.pn-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;
+        border:2px solid var(--border-2);background:var(--surface);transition:all .2s}
+.pn[data-s="active"] .pn-dot{animation:pdot 1s infinite}
+.pn[data-s="active"].logic .pn-dot,.pn[data-s="done"].logic .pn-dot{background:var(--logic-bd);border-color:var(--logic-bd)}
+.pn[data-s="active"].model .pn-dot,.pn[data-s="done"].model .pn-dot{background:var(--model-bd);border-color:var(--model-bd)}
+.pn[data-s="active"].human .pn-dot,.pn[data-s="done"].human .pn-dot{background:var(--human-bd);border-color:var(--human-bd)}
+
+.pn-body{flex:1;min-width:0}
+.pn-name{font:700 11px var(--font-m);line-height:1.2}
+.pn[data-s="active"].logic .pn-name{color:var(--logic-tx)}
+.pn[data-s="active"].model .pn-name{color:var(--model-tx)}
+.pn[data-s="active"].human .pn-name{color:var(--human-tx)}
+.pn[data-s="done"].logic .pn-name{color:var(--logic-tx)}
+.pn[data-s="done"].model .pn-name{color:var(--model-tx)}
+.pn[data-s="done"].human .pn-name{color:var(--human-tx)}
+.pn-detail{font-size:10px;color:var(--tx3);
+           white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.pn[data-s="active"] .pn-detail,.pn[data-s="done"] .pn-detail{opacity:.75}
+
+.pn-right{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:2px}
+.pn-ms{font:700 10px var(--font-m);color:var(--g800);white-space:nowrap}
+.pn-ico{font-size:11px}
+
+.pn-arr{display:flex;justify-content:center;color:var(--border-2);font-size:11px;
+        line-height:1;margin:0 0 2px 10px}
+.pipe-return{font:10px var(--font-m);color:var(--tx3);text-align:center;
+             padding:4px;border:1px dashed var(--border-2);border-radius:4px;
+             margin-top:5px;background:rgba(0,0,0,.02);
+             transition:all .4s;opacity:.45}
+.pipe-return.flash{opacity:1;border-color:var(--logic-bd);color:var(--logic-tx)}
+
+/* ── PROGRESS ── */
+.prog-wrap{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.prog-wrap::-webkit-scrollbar{width:4px}
+.prog-wrap::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:2px}
+.prog-hdr{font-size:10px;font-weight:700;letter-spacing:.1em;
+          text-transform:uppercase;color:var(--tx3);padding:10px 13px 5px;flex-shrink:0}
+.prog-item{display:flex;align-items:center;gap:7px;padding:4px 13px;transition:background .12s}
+.prog-item:hover{background:var(--surface-2)}
+.qdot{width:15px;height:15px;border-radius:50%;border:2px solid var(--border-2);
+      display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;font-size:7px;transition:all .2s}
+.qdot.pending{border-color:var(--border-2);background:transparent}
+.qdot.current{border-color:var(--amber);background:var(--amber);animation:pring 1.5s infinite}
+@keyframes pring{0%,100%{box-shadow:0 0 0 0 rgba(240,165,0,.4)}
+                 50%{box-shadow:0 0 0 4px rgba(240,165,0,0)}}
+.qdot.done{border-color:var(--g800);background:var(--g800);color:#fff}
+.qdot.skip{border-color:var(--border);background:var(--surface-2);color:var(--tx3)}
+.qid{font:700 11px var(--font-m);min-width:32px}
+.qid.current{color:var(--amber-dk)}.qid.done{color:var(--g800)}.qid.skip{color:var(--tx3)}
+.qdesc{font-size:11px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── UTILS ── */
+.hidden{display:none!important}
+.spin{display:inline-block;width:11px;height:11px;
+      border:2px solid rgba(0,0,0,.1);border-top-color:var(--g800);
+      border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<header class="hd">
+  <div class="hd-l">
+    <div class="logo">D</div>
+    <div>
+      <div class="hd-title">Demeter Ghana · BM270 Survey</div>
+      <div class="hd-sub">IVR Pipeline Demo</div>
+    </div>
+    <div class="vdiv"></div>
+    <div class="call-stat">
+      <div class="dot" id="dot"></div>
+      <span id="statTxt">Ready</span>
+    </div>
+    <div class="timer" id="timer">0:00</div>
+  </div>
+  <div class="hd-r">
+    <button class="btn btn-ghost" onclick="resetAll()">↺ Reset</button>
+    <button class="btn btn-amber" id="startBtn" onclick="startSession()">▶ Start Call</button>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- ── LEFT ── -->
+  <div class="main">
+    <div class="welcome" id="welcome">
+      <div class="wico">📞</div>
+      <h1 class="wtitle">BM270 Field Day Follow-up</h1>
+      <p class="wdesc">Simulates the full IVR pipeline end-to-end. Closed questions use scripted answer buttons; open-ended questions use your microphone. The pipeline panel animates each stage live with latency.</p>
+      <div class="wmeta">
+        <div><div class="mval">13</div><div class="mlbl">Questions</div></div>
+        <div><div class="mval">4:13</div><div class="mlbl">Audio</div></div>
+        <div><div class="mval">4–6</div><div class="mlbl">Min Target</div></div>
+      </div>
+      <div class="wrow">
+        <input class="phone" type="tel" id="phoneIn" placeholder="+233 — farmer phone (optional)">
+        <button class="btn btn-green" onclick="startSession()">Start Call</button>
+      </div>
+    </div>
+
+    <div class="transcript hidden" id="transcript"></div>
+    <div class="comp hidden" id="comp"></div>
+
+    <div class="cqbox hidden" id="cqbox">
+      <div class="cq-inner">
+        <div class="cq-hdr">
+          <span class="cq-lbl">Now Playing</span>
+          <span class="cq-id" id="cqId">—</span>
+          <span class="cq-parser" id="cqParser">—</span>
+        </div>
+        <div class="cq-text" id="cqText">—</div>
+        <div class="arow">
+          <button class="aplay" id="playBtn" onclick="toggleAudio()">▶</button>
+          <div class="awave" id="awave">
+            <div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div>
+            <div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div>
+            <div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div>
+          </div>
+          <div class="afname" id="afname">—</div>
+        </div>
+        <audio id="audio"
+               onplay="onAudioPlay()"
+               onpause="onAudioPause()"
+               onended="onAudioEnd()"></audio>
+        <div id="inputArea"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT ── -->
+  <div class="sidebar">
+    <div class="pipe-wrap">
+      <div class="sec-title">Pipeline Trace</div>
+      <div id="pipeFlow"></div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-hdr">Question Progress</div>
+      <div id="progList"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+const QS = [
+  {id:'OPEN', desc:'Good time to talk?'},
+  {id:'Q1',   desc:'Bought BM270?'},
+  {id:'Q2',   desc:'Planted yet?'},
+  {id:'Q2A',  desc:'Bags / acres planted?'},
+  {id:'Q3',   desc:'Why not buy?'},
+  {id:'Q3A',  desc:'Which seed?'},
+  {id:'Q4',   desc:'Bought fertilizer?'},
+  {id:'Q5',   desc:'Which fertilizer?'},
+  {id:'Q6',   desc:'Which dealer?'},
+  {id:'Q7',   desc:'Told other farmers?'},
+  {id:'Q8',   desc:'Field day memory?'},
+  {id:'Q9',   desc:'Demeter next season?'},
+  {id:'Q10',  desc:'What would help most?'},
+];
+
+const PIPE_NODES = [
+  {id:'SM',     label:'State Machine', sub:'routing · skip logic',    cls:'logic'},
+  {id:'MT_OUT', label:'MT  EN→Twi',    sub:'translate question',       cls:'model'},
+  {id:'TTS',    label:'TTS',           sub:'synthesise audio',         cls:'model'},
+  {id:'FARMER', label:'Farmer',        sub:'hears question · speaks',  cls:'human'},
+  {id:'ASR',    label:'ASR',           sub:'speech → transcript',      cls:'model'},
+  {id:'MT_IN',  label:'MT  Twi→EN',    sub:'translate · normalise',    cls:'model'},
+  {id:'AP',     label:'Answer Parser', sub:'intent match · log',       cls:'logic'},
+];
+
+// ── APP STATE ─────────────────────────────────────────────────────────────────
+const S = {
+  sid: null, startMs: null, timerID: null,
+  curQId: null, curParser: null,
+  done: false, turns: [],
+  doneQ: new Set(), skipQ: new Set(),
+  qmap: {},   // qid → {parser_type, options}
+};
+
+// mic state
+let mediaRecorder = null;
+let audioChunks   = [];
+let isRecording   = false;
+let audioCtx      = null;
+let analyser      = null;
+let micStream     = null;
+let waveRAF       = null;
+
+// pipeline node state
+const pns = {};   // id → {s: 'idle'|'active'|'done'|'bypass', detail:'', ms:null}
+
+// ── BOOT ─────────────────────────────────────────────────────────────────────
+async function init() {
+  PIPE_NODES.forEach(n => pns[n.id] = {s:'idle', detail:'', ms:null});
+  renderPipe();
+  renderProg();
+  try {
+    const r = await fetch('/survey/questions');
+    S.qmap = await r.json();
+  } catch(e) { console.warn('Could not pre-load questions:', e); }
+}
+
+// ── TIMER ────────────────────────────────────────────────────────────────────
+const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+function startTimer() {
+  if (S.timerID) clearInterval(S.timerID);
+  S.timerID = setInterval(() => {
+    if (!S.startMs) return;
+    document.getElementById('timer').textContent = fmt((Date.now()-S.startMs)/1000);
+  }, 500);
+}
+function stopTimer() { clearInterval(S.timerID); S.timerID = null; }
+
+function setStatus(cls, txt) {
+  document.getElementById('dot').className = 'dot ' + cls;
+  document.getElementById('statTxt').textContent = txt;
+}
+
+// ── PIPELINE RENDER ───────────────────────────────────────────────────────────
+function renderPipe() {
+  let html = '';
+  PIPE_NODES.forEach((n, i) => {
+    const p   = pns[n.id];
+    const ico = p.s==='done' ? '✓' : p.s==='bypass' ? '—' : p.s==='active' ? '<span class="spin" style="margin:0;border-top-color:inherit"></span>' : '';
+    const ms  = p.ms != null ? `${Math.round(p.ms)}ms` : '';
+    const det = p.detail || (p.s==='idle' ? n.sub : p.s==='bypass' ? 'bypassed · text mode' : n.sub);
+    html += `<div class="pn ${n.cls}" data-s="${p.s}" id="pn-${n.id}">
+      <div class="pn-dot"></div>
+      <div class="pn-body">
+        <div class="pn-name">${n.label}</div>
+        <div class="pn-detail">${esc(det)}</div>
+      </div>
+      <div class="pn-right">
+        ${ms ? `<span class="pn-ms">${ms}</span>` : ''}
+        ${ico ? `<span class="pn-ico">${ico}</span>` : ''}
+      </div>
+    </div>`;
+    if (i < PIPE_NODES.length-1) html += `<div class="pn-arr">▾</div>`;
+  });
+  html += `<div class="pipe-return" id="pipeRet">⤴ AP → SM  ·  next question</div>`;
+  document.getElementById('pipeFlow').innerHTML = html;
+}
+
+function setPipe(id, s, detail='', ms=null) {
+  pns[id] = {s, detail, ms};
+  renderPipe();
+}
+
+function resetPipe() {
+  PIPE_NODES.forEach(n => pns[n.id] = {s:'idle', detail:'', ms:null});
+  renderPipe();
+}
+
+function flashReturn() {
+  const el = document.getElementById('pipeRet');
+  if (!el) return;
+  el.classList.add('flash');
+  setTimeout(() => el.classList.remove('flash'), 1600);
+}
+
+// ── PROGRESS ─────────────────────────────────────────────────────────────────
+function renderProg() {
+  document.getElementById('progList').innerHTML = QS.map(q => {
+    let dc='pending', qc='';
+    if (q.id===S.curQId && !S.done)  { dc='current'; qc='current'; }
+    else if (S.doneQ.has(q.id))       { dc='done';    qc='done';    }
+    else if (S.skipQ.has(q.id))       { dc='skip';    qc='skip';    }
+    const ico = dc==='done'?'✓': dc==='skip'?'–':'';
+    return `<div class="prog-item">
+      <div class="qdot ${dc}">${ico}</div>
+      <div class="qid ${qc}">${q.id}</div>
+      <div class="qdesc">${q.desc}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── AUDIO ─────────────────────────────────────────────────────────────────────
+function loadAudio(url, name) {
+  const a = document.getElementById('audio');
+  a.src = url;
+  document.getElementById('afname').textContent = name || url.split('/').pop();
+  setPipe('TTS', 'active', 'loading…');
+  a.play().catch(() => {
+    // Autoplay blocked — enable input now so the user isn't stuck waiting
+    setPipe('TTS', 'active', 'click ▶ to play');
+    setPipe('FARMER', 'active', isMic(S.curParser) ? 'press mic to respond' : 'awaiting response');
+    setInputEnabled(true);
+  });
+}
+function toggleAudio() {
+  const a = document.getElementById('audio');
+  a.paused ? a.play() : a.pause();
+}
+function onAudioPlay() {
+  document.getElementById('playBtn').textContent = '⏸';
+  document.getElementById('awave').classList.add('playing');
+  setPipe('TTS', 'active', document.getElementById('afname').textContent);
+  // Enable input as soon as audio starts — real IVRs let you press any time during playback
+  const mode = isMic(S.curParser) ? 'press mic to respond' : 'press a button to respond';
+  setPipe('FARMER', 'active', mode);
+  setInputEnabled(true);
+}
+function onAudioPause() {
+  document.getElementById('playBtn').textContent = '▶';
+  document.getElementById('awave').classList.remove('playing');
+}
+function onAudioEnd() {
+  document.getElementById('playBtn').textContent = '▶';
+  document.getElementById('awave').classList.remove('playing');
+  setPipe('TTS', 'done', document.getElementById('afname').textContent);
+}
+
+// ── SESSION START ─────────────────────────────────────────────────────────────
+async function startSession() {
+  const phone = document.getElementById('phoneIn')?.value || '';
+  document.getElementById('startBtn').disabled = true;
+  setStatus('active', 'Connecting…');
+  try {
+    const r = await fetch('/survey/start', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({farmer_phone: phone})
+    });
+    const d = await r.json();
+    S.sid = d.session_id; S.curQId = d.current_question_id;
+    S.startMs = Date.now(); S.done = false;
+    S.turns = []; S.doneQ = new Set(); S.skipQ = new Set();
+
+    document.getElementById('welcome').classList.add('hidden');
+    document.getElementById('transcript').classList.remove('hidden');
+    document.getElementById('cqbox').classList.remove('hidden');
+    document.getElementById('comp').classList.add('hidden');
+
+    resetPipe();
+    setPipe('SM', 'active', `init → ${d.current_question_id}`);
+    setTimeout(() => {
+      setPipe('SM', 'done', `→ ${d.current_question_id}`);
+      setPipe('MT_OUT', 'bypass', 'pre-recorded audio');
+    }, 450);
+
+    setQuestion(d);
+    addSysTurn(d.current_question_id, d.current_question_text, d.next_audio);
+    startTimer(); setStatus('active', 'Call active'); renderProg();
+    document.getElementById('startBtn').disabled = false;
+  } catch(e) {
+    setStatus('', 'Error');
+    document.getElementById('startBtn').disabled = false;
+    alert('Failed to start: ' + e.message);
+  }
+}
+
+// ── SET QUESTION ──────────────────────────────────────────────────────────────
+function setQuestion(d) {
+  const qId        = d.current_question_id;
+  const parserType = d.current_parser_type || S.qmap[qId]?.parser_type;
+  const options    = d.current_options     || S.qmap[qId]?.options || [];
+  S.curQId = qId; S.curParser = parserType;
+
+  document.getElementById('cqId').textContent    = qId || '—';
+  document.getElementById('cqText').textContent  = d.current_question_text || '—';
+  document.getElementById('cqParser').textContent = parserType || '—';
+
+  if (d.audio_url) loadAudio(d.audio_url, d.next_audio);
+  renderInput(parserType, options);
+  setInputEnabled(false);
+}
+
+// ── INPUT RENDERING ───────────────────────────────────────────────────────────
+const isMic = pt => pt === 'regex' || pt === 'llm' || pt === 'raw';
+
+function renderInput(parserType, options) {
+  const area = document.getElementById('inputArea');
+  if (!parserType || !isMic(parserType)) {
+    area.innerHTML = `<div class="opt-grid">${
+      (options||[]).map((o, i) =>
+        `<button class="opt-btn" disabled data-idx="${i}">
+           <span class="opt-num">${i + 1}</span>${esc(o.text)}
+         </button>`
+      ).join('')
+    }</div>
+    <div class="opt-hint">You can also press a number key</div>`;
+    area._opts = options;
+    area.querySelector('.opt-grid').addEventListener('click', e => {
+      const btn = e.target.closest('.opt-btn');
+      if (!btn || btn.disabled) return;
+      sendChoice(area._opts[+btn.dataset.idx].text);
+    });
+  } else {
+    area.innerHTML = `<div class="mic-area">
+      <button class="mic-btn" id="micBtn" disabled onclick="toggleRec()">🎤</button>
+      <div class="mic-wave" id="micWave">
+        <div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div>
+        <div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div>
+      </div>
+      <span class="mic-status" id="micSt">Wait for question to finish…</span>
+    </div>`;
+  }
+}
+
+function setInputEnabled(on) {
+  document.querySelectorAll('.opt-btn').forEach(b => b.disabled = !on);
+  const mb = document.getElementById('micBtn');
+  if (mb) {
+    mb.disabled = !on;
+    if (on) {
+      const st = document.getElementById('micSt');
+      if (st) { st.textContent = 'Press to speak'; st.className = 'mic-status'; }
+    }
+  }
+}
+
+// ── SCRIPTED RESPONSE ─────────────────────────────────────────────────────────
+async function sendChoice(text) {
+  setInputEnabled(false);
+  setPipe('FARMER', 'done', `"${text.slice(0,28)}"`);
+  setPipe('ASR',   'bypass', 'text mode');
+  setPipe('MT_IN', 'bypass', 'text mode');
+  setPipe('AP',    'active', 'parsing…');
+  const prevQ = S.curQId;
+  try {
+    const r = await fetch('/survey/respond/text', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({session_id: S.sid, english_text: text})
+    });
+    handleResp(await r.json(), text, prevQ);
+  } catch(e) {
+    alert('Error: '+e.message);
+    setInputEnabled(true);
+  }
+}
+
+// ── MIC RECORDING ─────────────────────────────────────────────────────────────
+async function toggleRec() {
+  if (!isRecording) await startRec(); else stopRec();
+}
+
+async function startRec() {
+  // Microphone requires a secure context (HTTPS or localhost)
+  if (!navigator.mediaDevices || !window.isSecureContext) {
+    showMicFallback('Mic requires HTTPS. Type your response instead:'); return;
+  }
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({audio:true, video:false});
+  } catch(e) {
+    showMicFallback('Mic access denied. Type your response instead:'); return;
+  }
+  const mime = ['audio/webm;codecs=opus','audio/webm','audio/mp4']
+    .find(t => MediaRecorder.isTypeSupported(t)) || 'audio/mp4';
+
+  mediaRecorder = new MediaRecorder(micStream, {mimeType: mime});
+  audioChunks = [];
+  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+  mediaRecorder.onstop = () => {
+    const blob = new Blob(audioChunks, {type: mime});
+    micStream.getTracks().forEach(t => t.stop());
+    stopMicWave();
+    submitAudio(blob, mime);
+  };
+  mediaRecorder.start(100);
+  isRecording = true;
+
+  const btn = document.getElementById('micBtn');
+  if (btn) { btn.classList.add('recording'); btn.textContent = '⏹'; }
+  const st = document.getElementById('micSt');
+  if (st) { st.textContent = 'Recording… tap to stop'; st.className = 'mic-status rec'; }
+
+  setPipe('FARMER', 'active', 'recording…');
+  startMicWave();
+}
+
+function stopRec() {
+  if (!mediaRecorder || !isRecording) return;
+  mediaRecorder.stop(); isRecording = false;
+  const btn = document.getElementById('micBtn');
+  if (btn) { btn.classList.remove('recording'); btn.textContent = '🎤'; btn.disabled = true; }
+  const st = document.getElementById('micSt');
+  if (st) { st.textContent = 'Processing…'; st.className = 'mic-status'; }
+  setPipe('FARMER', 'done', 'audio captured');
+  setPipe('ASR', 'active', 'transcribing…');
+}
+
+async function submitAudio(blob, mime) {
+  const prevQ = S.curQId;
+  const fd = new FormData();
+  fd.append('session_id', S.sid);
+  const ext = mime.includes('webm') ? 'webm' : 'mp4';
+  fd.append('audio_file', blob, `response.${ext}`);
+  try {
+    const r = await fetch('/survey/respond/audio', {method:'POST', body:fd});
+    const d = await r.json();
+    const it = d.inference_times || {};
+    if (it.asr_seconds > 0) setPipe('ASR', 'done', '', it.asr_seconds*1000);
+    if (it.mt_seconds  > 0) setPipe('MT_IN','done', '', it.mt_seconds*1000);
+    setPipe('AP', 'active', 'parsing…');
+    setTimeout(() => handleResp(d, '[voice response]', prevQ), 180);
+  } catch(e) {
+    alert('Audio submit error: '+e.message);
+    setInputEnabled(true);
+    setPipe('FARMER','idle'); setPipe('ASR','idle');
+  }
+}
+
+// ── MIC WAVEFORM ──────────────────────────────────────────────────────────────
+function startMicWave() {
+  try {
+    audioCtx = new AudioContext();
+    const src = audioCtx.createMediaStreamSource(micStream);
+    analyser = audioCtx.createAnalyser(); analyser.fftSize = 32;
+    src.connect(analyser);
+    drawMicWave();
+  } catch(e) {}
+}
+function drawMicWave() {
+  if (!analyser) return;
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(data);
+  document.querySelectorAll('.mic-wave .wb').forEach((b,i) => {
+    const h = Math.max(3, Math.min(16, (data[i*2]||0)/14));
+    b.style.height = h+'px'; b.style.opacity = '1';
+  });
+  waveRAF = requestAnimationFrame(drawMicWave);
+}
+function showMicFallback(label) {
+  const area = document.getElementById('inputArea');
+  area.innerHTML = `<div style="display:flex;flex-direction:column;gap:7px">
+    <span style="font:11px var(--font-m);color:var(--tx3)">${label}</span>
+    <div style="display:flex;gap:7px">
+      <input id="micFallbackIn" type="text" placeholder="e.g. NPK 15-15-15, two bags…"
+        style="flex:1;padding:8px 11px;border:1.5px solid var(--border-2);
+               border-radius:var(--r);font:13px var(--font-b);background:var(--surface)"
+        onkeydown="if(event.key==='Enter')sendMicFallback()">
+      <button class="btn btn-green" onclick="sendMicFallback()">Send</button>
+    </div>
+  </div>`;
+  setPipe('FARMER', 'active', 'awaiting text response');
+  document.getElementById('micFallbackIn').focus();
+}
+
+async function sendMicFallback() {
+  const inp = document.getElementById('micFallbackIn');
+  const text = inp?.value?.trim();
+  if (!text || !S.sid) return;
+  inp.disabled = true;
+  setPipe('FARMER', 'done', `"${text.slice(0,28)}"`);
+  setPipe('ASR',   'bypass', 'text fallback');
+  setPipe('MT_IN', 'bypass', 'text fallback');
+  setPipe('AP',    'active', 'parsing…');
+  const prevQ = S.curQId;
+  try {
+    const r = await fetch('/survey/respond/text', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({session_id: S.sid, english_text: text})
+    });
+    handleResp(await r.json(), text, prevQ);
+  } catch(e) {
+    alert('Error: '+e.message);
+    inp.disabled = false;
+  }
+}
+
+function stopMicWave() {
+  if (waveRAF) { cancelAnimationFrame(waveRAF); waveRAF = null; }
+  if (audioCtx) { audioCtx.close().catch(()=>{}); audioCtx = null; }
+  analyser = null;
+  document.querySelectorAll('.mic-wave .wb').forEach(b => { b.style.height='3px'; b.style.opacity='.35'; });
+}
+
+// ── HANDLE RESPONSE ───────────────────────────────────────────────────────────
+function handleResp(d, inputText, prevQ) {
+  const it = d.inference_times || {};
+  setPipe('AP', 'done', `${d.answer_key} (${d.parser_used})`, it.llm_seconds > 0 ? it.llm_seconds*1000 : null);
+
+  addUsrTurn(inputText, d);
+
+  if (d.action === 'reprompt') {
+    addNote('⚠ Response unclear — re-prompting');
+    const aud = document.getElementById('audio');
+    aud.src = d.reprompt_audio_url || d.audio_url;
+    aud.play().catch(()=>{});
+    if (d.question_audio_url) {
+      aud.onended = () => {
+        onAudioEnd();
+        aud.src = d.question_audio_url;
+        document.getElementById('afname').textContent = d.question_audio_url.split('/').pop();
+        aud.play().catch(()=>{});
+        aud.onended = onAudioEnd;
+      };
+    }
+    setTimeout(() => setInputEnabled(true), 600);
+    return;
+  }
+
+  S.doneQ.add(prevQ);
+  S.turns.push({qId:prevQ, response:inputText, key:d.answer_key, parser:d.parser_used, extv:d.extracted_value});
+
+  setTimeout(flashReturn, 300);
+
+  if (d.is_complete) {
+    S.done = true; S.curQId = null; stopTimer();
+    setStatus('done', d.completion_reason==='callback' ? 'Callback' : 'Completed');
+    renderProg();
+    setPipe('SM', 'done', d.completion_reason==='callback' ? '→ CALLBACK' : '→ CLOSE');
+    document.getElementById('cqbox').classList.add('hidden');
+    document.getElementById('transcript').classList.add('hidden');
+    showComp(d);
+  } else {
+    S.curQId = d.current_question_id;
+    setPipe('SM', 'active', `routing to ${d.current_question_id}`);
+    setTimeout(() => {
+      setPipe('SM', 'done', `→ ${d.current_question_id}`);
+      setPipe('MT_OUT', 'bypass', 'pre-recorded audio');
+      if (d.current_question_text) {
+        addSysTurn(d.current_question_id, d.current_question_text, d.next_audio);
+        setQuestion(d);
+      }
+      renderProg();
+    }, 400);
+  }
+}
+
+// ── TRANSCRIPT ────────────────────────────────────────────────────────────────
+function addSysTurn(qId, qText) {
+  append(`<div class="turn-lbl sys">🔊 System</div>
+    <div class="card sys"><span class="qbadge">${qId}</span>
+    <div class="qtext">${esc(qText||'')}</div></div>`);
+}
+
+function addUsrTurn(inputTxt, d) {
+  const key   = d.answer_key || '—';
+  const par   = d.parser_used || '—';
+  const conf  = d.confidence ?? 0;
+  const nextQ = d.current_question_id || d.completion_reason || '—';
+  const act   = d.action;
+  const extv  = d.extracted_value && typeof d.extracted_value==='object' && Object.keys(d.extracted_value).length
+                  ? JSON.stringify(d.extracted_value) : null;
+  const nxt   = act==='reprompt'?'↺ Re-prompt': act==='complete'?'✓ Done': `→ ${nextQ}`;
+  append(`<div class="turn-lbl usr">👤 Farmer</div>
+    <div class="card usr">
+      <div class="rtext">"${esc(inputTxt)}"</div>
+      <div class="prow">
+        <span class="badge b-${par}">${par}</span>
+        <span class="pkey">key: ${esc(key)}</span>
+        <span class="parr">→</span>
+        <span class="pnext">${esc(nxt)}</span>
+        <div class="cbar-wrap">
+          <span class="clbl">conf</span>
+          <div class="cbar"><div class="cfill" style="width:${(conf*100).toFixed(0)}%"></div></div>
+          <span class="clbl">${(conf*100).toFixed(0)}%</span>
+        </div>
+      </div>
+      ${extv?`<div class="extval">⬦ ${esc(extv)}</div>`:''}
+    </div>`);
+}
+
+function addNote(msg) { append(`<div class="turn-lbl info">${msg}</div>`); }
+
+function append(html) {
+  const el = document.createElement('div'); el.className = 'turn';
+  el.innerHTML = html;
+  const t = document.getElementById('transcript');
+  t.appendChild(el); t.scrollTop = t.scrollHeight;
+}
+
+// ── COMPLETION ────────────────────────────────────────────────────────────────
+function showComp(d) {
+  const cb      = d.completion_reason === 'callback';
+  const elapsed = S.startMs ? fmt((Date.now()-S.startMs)/1000) : '—';
+  const rows    = S.turns.map(t => `
+    <div class="ans-row">
+      <div class="aq">${t.qId}</div>
+      <div>${t.response?`<em>"${esc(t.response.slice(0,45))}${t.response.length>45?'…':''}"</em>`:''}</div>
+      <div class="ak">${esc(t.key||'—')}</div>
+    </div>`).join('');
+
+  const p = document.getElementById('comp');
+  p.classList.remove('hidden');
+  p.innerHTML = `
+    <div class="comp-hdr">
+      <span class="comp-ico">${cb?'📵':'✅'}</span>
+      <h2 class="comp-title">${cb?'Callback Scheduled':'Survey Complete'}</h2>
+      <p class="comp-sub">${cb?'Farmer requested callback – call ended early.':`Completed in ${elapsed}.`}</p>
+    </div>
+    <div class="ans-table">
+      <div class="ans-row hd"><div>Question</div><div>Response</div><div style="text-align:right">Key</div></div>
+      ${rows}
+    </div>
+    <div id="q8zone"></div>
+    <button class="btn btn-outline" onclick="viewSession()" style="width:100%;margin-top:8px">📋 View Full Session JSON</button>
+    <button class="btn btn-outline" onclick="resetAll()" style="width:100%;margin-top:8px">↺ New Simulation</button>`;
+
+  document.getElementById('q8zone').innerHTML = `
+    <button class="btn btn-amber" id="q8btn" onclick="runQ8()" style="width:100%;margin-bottom:10px">
+      🔬 Run Q8 Post-Call Analysis (Claude Haiku 4.5)
+    </button>`;
+}
+
+async function runQ8() {
+  const btn = document.getElementById('q8btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Analysing…';
+  try {
+    const r = await fetch(`/survey/post_call/${S.sid}`, {method:'POST'});
+    const d = await r.json(); const a = d.q8_analysis||{};
+    const chips = (a.themes||[]).map(t=>`<span class="chip">${esc(t)}</span>`).join('');
+    document.getElementById('q8zone').innerHTML = `
+      <div class="q8box">
+        <div class="q8t">Q8 — Field Day Recall Analysis</div>
+        ${chips?`<div class="chips">${chips}</div>`:''}
+        ${a.product_mentions?.length?`<div class="q8meta"><strong>Products:</strong> ${a.product_mentions.join(', ')}</div>`:''}
+        ${a.sentiment?`<div class="q8meta"><strong>Sentiment:</strong> ${a.sentiment}</div>`:''}
+        ${a.summary?`<div class="q8sum">"${esc(a.summary)}"</div>`:''}
+        ${a.error?`<div style="color:red;font-size:12px">Error: ${a.error}</div>`:''}
+      </div>`;
+  } catch(e) {
+    document.getElementById('q8zone').innerHTML = `<p style="color:red;font-size:12px">Analysis failed: ${e.message}</p>`;
+  }
+}
+
+async function viewSession() {
+  try {
+    const r = await fetch(`/survey/session/${S.sid}`);
+    const d = await r.json();
+    const pre = document.createElement('pre'); pre.className = 'raw';
+    pre.textContent = JSON.stringify(d, null, 2);
+    document.getElementById('comp').appendChild(pre);
+  } catch(e) {}
+}
+
+// ── RESET ─────────────────────────────────────────────────────────────────────
+function resetAll() {
+  stopTimer();
+  window.speechSynthesis?.cancel();
+  if (isRecording) { try { mediaRecorder.stop(); } catch(e){} isRecording = false; }
+  stopMicWave();
+  Object.assign(S, {
+    sid:null, startMs:null, timerID:null, curQId:null, curParser:null,
+    done:false, turns:[], doneQ:new Set(), skipQ:new Set()
+  });
+  document.getElementById('welcome').classList.remove('hidden');
+  document.getElementById('transcript').classList.add('hidden');
+  document.getElementById('transcript').innerHTML = '';
+  document.getElementById('cqbox').classList.add('hidden');
+  document.getElementById('comp').classList.add('hidden');
+  document.getElementById('comp').innerHTML = '';
+  document.getElementById('inputArea').innerHTML = '';
+  document.getElementById('timer').textContent = '0:00';
+  document.getElementById('audio').src = '';
+  setStatus('', 'Ready');
+  resetPipe();
+  renderProg();
+}
+
+// ── UTIL ──────────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── KEYBOARD SHORTCUTS ────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (S.done || !S.sid) return;
+  const n = parseInt(e.key);
+  if (isNaN(n) || n < 1) return;
+  const btns = [...document.querySelectorAll('.opt-btn:not([disabled])')];
+  if (btns[n - 1]) btns[n - 1].click();
+});
+
+init();
+</script>
+</body>
+</html>
